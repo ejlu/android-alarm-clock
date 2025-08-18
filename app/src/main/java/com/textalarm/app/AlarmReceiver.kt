@@ -14,11 +14,26 @@ import androidx.core.app.NotificationCompat
 class AlarmReceiver : BroadcastReceiver() {
     
     override fun onReceive(context: Context, intent: Intent) {
-        showNotification(context)
+        val alarmId = intent.getLongExtra("alarm_id", -1)
+        val alarmLabel = intent.getStringExtra("alarm_label") ?: "Alarm"
+        val isRecurring = intent.getBooleanExtra("is_recurring", false)
+        
+        showNotification(context, alarmLabel)
         vibrateDevice(context)
+        
+        // If it's a recurring alarm, reschedule it for the next occurrence
+        if (isRecurring && alarmId != -1L) {
+            rescheduleRecurringAlarm(context, alarmId)
+        }
     }
     
-    private fun showNotification(context: Context) {
+    private fun rescheduleRecurringAlarm(context: Context, alarmId: Long) {
+        // We'll need to get the alarm from the database and reschedule it
+        // This would require access to the repository, which we'll implement if needed
+        // For now, the AlarmScheduler handles the next occurrence calculation
+    }
+    
+    private fun showNotification(context: Context, alarmLabel: String = "Alarm") {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         
         val channelId = "alarm_channel"
@@ -34,7 +49,7 @@ class AlarmReceiver : BroadcastReceiver() {
         
         val notification = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(android.R.drawable.ic_dialog_alert)
-            .setContentTitle(context.getString(R.string.alarm_title))
+            .setContentTitle(alarmLabel)
             .setContentText(context.getString(R.string.alarm_message))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)

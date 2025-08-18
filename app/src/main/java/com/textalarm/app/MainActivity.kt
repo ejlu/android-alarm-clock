@@ -1,139 +1,130 @@
 package com.textalarm.app
 
-import android.app.AlarmManager
-import android.app.PendingIntent
-import android.content.Context
-import android.content.Intent
 import android.os.Bundle
-import android.widget.Button
-import android.widget.EditText
-import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import java.text.SimpleDateFormat
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.textalarm.app.data.Alarm
+import com.textalarm.app.databinding.ActivityMainBinding
+import com.textalarm.app.ui.AlarmAdapter
+import com.textalarm.app.ui.AlarmDetailsDialog
+import com.textalarm.app.ui.AlarmViewModel
+import com.textalarm.app.utils.TimeParser
 import java.util.*
 import java.util.regex.Pattern
 
 class MainActivity : AppCompatActivity() {
     
-    private lateinit var timeInput: EditText
-    private lateinit var setAlarmButton: Button
-    private lateinit var statusText: TextView
+    private lateinit var binding: ActivityMainBinding
+    private lateinit var alarmAdapter: AlarmAdapter
+    private val viewModel: AlarmViewModel by viewModels()
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
         
-        timeInput = findViewById(R.id.timeInput)
-        setAlarmButton = findViewById(R.id.setAlarmButton)
-        statusText = findViewById(R.id.statusText)
+        setSupportActionBar(binding.toolbar)
         
-        setAlarmButton.setOnClickListener {
-            val timeText = timeInput.text.toString().trim()
-            if (timeText.isNotEmpty()) {
-                setAlarm(timeText)
-            } else {
-                Toast.makeText(this, getString(R.string.invalid_time), Toast.LENGTH_SHORT).show()
+        setupRecyclerView()
+        setupClickListeners()
+        observeAlarms()
+    }
+    
+    private fun setupRecyclerView() {
+        alarmAdapter = AlarmAdapter(
+            onAlarmToggle = { alarm, enabled ->
+                viewModel.toggleAlarm(alarm, enabled)
+            },
+            onAlarmEdit = { alarm ->
+                showAlarmDialog(alarm)
+            },
+            onAlarmDelete = { alarm ->
+                showDeleteConfirmation(alarm)
             }
+        )
+        
+        binding.alarmsRecyclerView.apply {
+            adapter = alarmAdapter
+            layoutManager = LinearLayoutManager(this@MainActivity)
         }
     }
     
-    private fun setAlarm(timeText: String) {
+    private fun setupClickListeners() {
+        binding.setAlarmButton.setOnClickListener {
+            createAlarmFromInput()
+        }
+        
+        binding.fabAddAlarm.setOnClickListener {
+            showAlarmDialog()
+        }
+    }
+    
+    private fun observeAlarms() {
+        viewModel.allAlarms.observe(this) { alarms ->
+            alarmAdapter.submitList(alarms)
+        }
+    }
+    
+    private fun createAlarmFromInput() {
+        val timeText = binding.timeInput.text?.toString()?.trim()
+        
+        if (timeText.isNullOrEmpty()) {
+            binding.timeInput.error = "Please enter a time"
+            return
+        }
+        
         try {
-            val alarmTime = parseTime(timeText)
-            if (alarmTime != null) {
-                scheduleAlarm(alarmTime)
-                val timeFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
-                statusText.text = getString(R.string.alarm_set, timeFormat.format(alarmTime))
-                statusText.visibility = TextView.VISIBLE
-                timeInput.text.clear()
+            val parsedTime = TimeParser.parseTime(timeText)
+            if (parsedTime != null) {
+                val alarm = Alarm(
+                    hour = parsedTime.first,
+                    minute = parsedTime.second,
+                    label = "Alarm",
+                    isEnabled = true
+                )
+                
+                viewModel.insertAlarm(alarm)
+                binding.timeInput.text?.clear()
+                binding.timeInput.error = null
+                
+                Toast.makeText(
+                    this,
+                    "Alarm set for ${alarm.getTimeString()}",
+                    Toast.LENGTH_SHORT
+                ).show()
             } else {
-                Toast.makeText(this, getString(R.string.invalid_time), Toast.LENGTH_SHORT).show()
+                binding.timeInput.error = "Invalid time format"
             }
         } catch (e: Exception) {
-            Toast.makeText(this, getString(R.string.invalid_time), Toast.LENGTH_SHORT).show()
+            binding.timeInput.error = "Invalid time format"
         }
     }
     
-    private fun parseTime(timeText: String): Date? {
-        val lowerText = timeText.lowercase().replace(" ", "")
-        
-        val patterns = listOf(
-            Pattern.compile("(\\d{1,2}):(\\d{2})(am|pm)"),
-            Pattern.compile("(\\d{1,2})(am|pm)"),
-            Pattern.compile("(\\d{1,2}):(\\d{2})"),
-            Pattern.compile("(\\d{3,4})")
-        )
-        
-        val calendar = Calendar.getInstance()
-        
-        for (pattern in patterns) {
-            val matcher = pattern.matcher(lowerText)
-            if (matcher.matches()) {
-                when (pattern.pattern()) {
-                    "(\\d{1,2}):(\\d{2})(am|pm)" -> {
-                        var hour = matcher.group(1)!!.toInt()
-                        val minute = matcher.group(2)!!.toInt()
-                        val ampm = matcher.group(3)!!
-                        
-                        if (ampm == "pm" && hour != 12) hour += 12
-                        if (ampm == "am" && hour == 12) hour = 0
-                        
-                        calendar.set(Calendar.HOUR_OF_DAY, hour)
-                        calendar.set(Calendar.MINUTE, minute)
-                    }
-                    "(\\d{1,2})(am|pm)" -> {
-                        var hour = matcher.group(1)!!.toInt()
-                        val ampm = matcher.group(2)!!
-                        
-                        if (ampm == "pm" && hour != 12) hour += 12
-                        if (ampm == "am" && hour == 12) hour = 0
-                        
-                        calendar.set(Calendar.HOUR_OF_DAY, hour)
-                        calendar.set(Calendar.MINUTE, 0)
-                    }
-                    "(\\d{1,2}):(\\d{2})" -> {
-                        val hour = matcher.group(1)!!.toInt()
-                        val minute = matcher.group(2)!!.toInt()
-                        
-                        calendar.set(Calendar.HOUR_OF_DAY, hour)
-                        calendar.set(Calendar.MINUTE, minute)
-                    }
-                    "(\\d{3,4})" -> {
-                        val timeStr = matcher.group(1)!!
-                        val hour = if (timeStr.length == 3) {
-                            timeStr.substring(0, 1).toInt()
-                        } else {
-                            timeStr.substring(0, 2).toInt()
-                        }
-                        val minute = timeStr.substring(timeStr.length - 2).toInt()
-                        
-                        calendar.set(Calendar.HOUR_OF_DAY, hour)
-                        calendar.set(Calendar.MINUTE, minute)
-                    }
-                }
-                
-                calendar.set(Calendar.SECOND, 0)
-                calendar.set(Calendar.MILLISECOND, 0)
-                
-                if (calendar.timeInMillis <= System.currentTimeMillis()) {
-                    calendar.add(Calendar.DAY_OF_YEAR, 1)
-                }
-                
-                return calendar.time
+    private fun showAlarmDialog(existingAlarm: Alarm? = null) {
+        val dialog = AlarmDetailsDialog.newInstance(existingAlarm) { alarm ->
+            if (existingAlarm != null) {
+                viewModel.updateAlarm(alarm)
+                Toast.makeText(this, "Alarm updated", Toast.LENGTH_SHORT).show()
+            } else {
+                viewModel.insertAlarm(alarm)
+                Toast.makeText(this, "Alarm saved for ${alarm.getTimeString()}", Toast.LENGTH_SHORT).show()
             }
         }
-        
-        return null
+        dialog.show(supportFragmentManager, "AlarmDetailsDialog")
     }
     
-    private fun scheduleAlarm(alarmTime: Date) {
-        val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        val intent = Intent(this, AlarmReceiver::class.java)
-        val pendingIntent = PendingIntent.getBroadcast(
-            this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-        
-        alarmManager.setExact(AlarmManager.RTC_WAKEUP, alarmTime.time, pendingIntent)
+    private fun showDeleteConfirmation(alarm: Alarm) {
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Delete Alarm")
+            .setMessage("Delete alarm for ${alarm.getTimeString()}?")
+            .setPositiveButton("Delete") { _, _ ->
+                viewModel.deleteAlarm(alarm)
+                Toast.makeText(this, "Alarm deleted", Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 }
