@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Text Alarm</string>
+    <string name="enter_time">Enter time (e.g., 7:30am, 2:15pm, 18:00)</string>
+    <string name="set_alarm">Set Alarm</string>
+    <string name="alarm_set">Alarm set for %s</string>
+    <string name="invalid_time">Invalid time format</string>
+    <string name="alarm_title">Alarm</string>
+    <string name="alarm_message">Time to wake up!</string>
+</resources>
