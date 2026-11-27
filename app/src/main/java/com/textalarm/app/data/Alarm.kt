@@ -2,8 +2,7 @@ package com.textalarm.app.data
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import java.time.LocalTime
-import java.time.format.DateTimeFormatter
+import java.text.SimpleDateFormat
 import java.util.*
 
 @Entity(tableName = "alarms")
@@ -18,51 +17,35 @@ data class Alarm(
     val daysOfWeek: Int = 0, // Bitmap: Sunday=1, Monday=2, Tuesday=4, etc.
     val soundUri: String? = null,
     val vibrate: Boolean = true,
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+    val nextTriggerAt: Long? = null
 ) {
     fun getTimeString(): String {
-        val time = LocalTime.of(hour, minute)
-        return time.format(DateTimeFormatter.ofPattern("h:mm a"))
-    }
-    
-    fun getNextAlarmTime(): Long {
-        val calendar = Calendar.getInstance()
-        calendar.set(Calendar.HOUR_OF_DAY, hour)
-        calendar.set(Calendar.MINUTE, minute)
-        calendar.set(Calendar.SECOND, 0)
-        calendar.set(Calendar.MILLISECOND, 0)
-        
-        if (!isRecurring) {
-            // One-time alarm
-            if (calendar.timeInMillis <= System.currentTimeMillis()) {
-                calendar.add(Calendar.DAY_OF_YEAR, 1)
-            }
-            return calendar.timeInMillis
+        val time = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, hour)
+            set(Calendar.MINUTE, minute)
         }
-        
-        // Recurring alarm - find next occurrence
-        val currentDayOfWeek = calendar.get(Calendar.DAY_OF_WEEK)
-        val currentTime = System.currentTimeMillis()
-        
-        for (i in 0..6) {
-            val dayOfWeek = ((currentDayOfWeek - 1 + i) % 7) + 1
-            val dayBit = 1 shl (dayOfWeek - 1)
-            
-            if (daysOfWeek and dayBit != 0) {
-                if (i == 0 && calendar.timeInMillis > currentTime) {
-                    // Today and time hasn't passed
-                    return calendar.timeInMillis
-                } else if (i > 0) {
-                    // Future day
-                    calendar.add(Calendar.DAY_OF_YEAR, i)
-                    return calendar.timeInMillis
-                }
-            }
-        }
-        
-        return calendar.timeInMillis
+        return SimpleDateFormat("h:mm a", Locale.getDefault()).format(time.time)
     }
-    
+
+    fun getNextAlarmTime(now: Long = System.currentTimeMillis()): Long {
+        val day = Calendar.getInstance().apply { timeInMillis = now }
+        val selectedDays = if (isRecurring && daysOfWeek and 127 != 0) daysOfWeek else 127
+        while (true) {
+            val candidate = (day.clone() as Calendar).apply {
+                set(Calendar.HOUR_OF_DAY, hour)
+                set(Calendar.MINUTE, minute)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }
+            val bit = 1 shl (day.get(Calendar.DAY_OF_WEEK) - 1)
+            if (selectedDays and bit != 0 && candidate.timeInMillis > now) {
+                return candidate.timeInMillis
+            }
+            day.add(Calendar.DATE, 1)
+        }
+    }
+
     fun getDaysOfWeekString(): String {
         if (!isRecurring) return "Once"
         

@@ -30,6 +30,13 @@
             android:orientation="vertical"
             android:padding="16dp">
 
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/dismissAlarm"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/dismiss_alarm"
+                android:visibility="gone" />
+
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/alarmsRecyclerView"
                 android:layout_width="match_parent"

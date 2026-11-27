@@ -6,99 +6,30 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import com.textalarm.app.AlarmReceiver
-import com.textalarm.app.data.Alarm
+import com.textalarm.app.MainActivity
 
 class AlarmScheduler(private val context: Context) {
-    
-    private val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-    
-    fun scheduleAlarm(alarm: Alarm) {
-        if (!alarm.isRecurring) {
-            scheduleOneTimeAlarm(alarm)
-        } else {
-            scheduleRecurringAlarm(alarm)
-        }
+    private val manager = context.getSystemService(AlarmManager::class.java)
+    private val flags = PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+
+    fun canSchedule(): Boolean =
+        Build.VERSION.SDK_INT < Build.VERSION_CODES.S || manager.canScheduleExactAlarms()
+
+    fun schedule(alarmId: Long, triggerAt: Long) {
+        if (!canSchedule()) return // The permission-granted broadcast restores saved alarms.
+        val show = PendingIntent.getActivity(context, 0, Intent(context, MainActivity::class.java), flags)
+        val intent = Intent(context, AlarmReceiver::class.java)
+            .putExtra("alarm_id", alarmId)
+            .putExtra("trigger_at", triggerAt)
+        val delivery = PendingIntent.getBroadcast(context, alarmId.toInt(), intent, flags)
+        manager.setAlarmClock(AlarmManager.AlarmClockInfo(triggerAt, show), delivery)
     }
-    
-    private fun scheduleOneTimeAlarm(alarm: Alarm) {
-        val intent = Intent(context, AlarmReceiver::class.java).apply {
-            putExtra("alarm_id", alarm.id)
-            putExtra("alarm_label", alarm.label)
-            putExtra("is_recurring", false)
-        }
-        
-        val pendingIntent = PendingIntent.getBroadcast(
-            context,
-            alarm.id.toInt(),
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-        
-        val triggerTime = alarm.getNextAlarmTime()
-        
-        setAlarmWithBestMethod(triggerTime, pendingIntent)
-    }
-    
-    private fun scheduleRecurringAlarm(alarm: Alarm) {
-        val intent = Intent(context, AlarmReceiver::class.java).apply {
-            putExtra("alarm_id", alarm.id)
-            putExtra("alarm_label", alarm.label)
-            putExtra("is_recurring", true)
-        }
-        
-        val pendingIntent = PendingIntent.getBroadcast(
-            context,
-            alarm.id.toInt(),
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-        
-        val triggerTime = alarm.getNextAlarmTime()
-        
-        setAlarmWithBestMethod(triggerTime, pendingIntent)
-    }
-    
-    private fun setAlarmWithBestMethod(triggerTime: Long, pendingIntent: PendingIntent) {
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                alarmManager.setExactAndAllowWhileIdle(
-                    AlarmManager.RTC_WAKEUP,
-                    triggerTime,
-                    pendingIntent
-                )
-            } else {
-                alarmManager.setExact(
-                    AlarmManager.RTC_WAKEUP,
-                    triggerTime,
-                    pendingIntent
-                )
-            }
-        } catch (e: SecurityException) {
-            // Handle case where exact alarm permission is not granted
-            alarmManager.set(
-                AlarmManager.RTC_WAKEUP,
-                triggerTime,
-                pendingIntent
-            )
-        }
-    }
-    
+
     fun cancelAlarm(alarmId: Long) {
         val intent = Intent(context, AlarmReceiver::class.java)
-        val pendingIntent = PendingIntent.getBroadcast(
-            context,
-            alarmId.toInt(),
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-        
-        alarmManager.cancel(pendingIntent)
-        pendingIntent.cancel()
-    }
-    
-    fun rescheduleAllAlarms(alarms: List<Alarm>) {
-        alarms.filter { it.isEnabled }.forEach { alarm ->
-            scheduleAlarm(alarm)
-        }
+        val delivery = PendingIntent.getBroadcast(context, alarmId.toInt(), intent,
+            PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE) ?: return
+        manager.cancel(delivery)
+        delivery.cancel()
     }
 }

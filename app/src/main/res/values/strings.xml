@@ -7,4 +7,7 @@
     <string name="invalid_time">Invalid time format</string>
     <string name="alarm_title">Alarm</string>
     <string name="alarm_message">Time to wake up!</string>
+    <string name="dismiss_alarm">Dismiss alarm</string>
+    <string name="notification_denied">Alarms will still ring. Open Text Alarm to dismiss them.</string>
+    <string name="allow_exact_alarms">Allow alarms and reminders, then set your alarm again.</string>
 </resources>
