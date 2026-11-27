@@ -1,172 +1,176 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="24dp">
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Set Alarm"
-        android:textAppearance="@style/TextAppearance.Material3.HeadlineSmall"
-        android:layout_marginBottom="24dp" />
-
-    <com.google.android.material.textfield.TextInputLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Time (e.g., 7:30am, 18:00)"
-        style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
-
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/timeInput"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:inputType="text" />
-
-    </com.google.android.material.textfield.TextInputLayout>
-
-    <com.google.android.material.textfield.TextInputLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:hint="Label (optional)"
-        style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
-
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/labelInput"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:inputType="text" />
-
-    </com.google.android.material.textfield.TextInputLayout>
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:layout_marginBottom="8dp"
-        android:text="Repeat"
-        android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
-
-    <com.google.android.material.materialswitch.MaterialSwitch
-        android:id="@+id/recurringSwitch"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Recurring alarm"
-        android:layout_marginBottom="16dp" />
+    android:layout_height="wrap_content">
 
     <LinearLayout
-        android:id="@+id/daysOfWeekContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:visibility="gone">
+        android:padding="24dp">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            android:text="Repeat on"
-            android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
+            android:text="Set Alarm"
+            android:textAppearance="@style/TextAppearance.Material3.HeadlineSmall"
+            android:layout_marginBottom="24dp" />
 
-        <LinearLayout
+        <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center">
+            android:hint="Time (e.g., 7:30am, 18:00)"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
 
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipSunday"
-                style="@style/Widget.Material3.Chip.Filter"
-                android:layout_width="wrap_content"
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/timeInput"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="4dp"
-                android:text="S"
-                android:checkable="true" />
+                android:inputType="text" />
 
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipMonday"
-                style="@style/Widget.Material3.Chip.Filter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="4dp"
-                android:text="M"
-                android:checkable="true" />
+        </com.google.android.material.textfield.TextInputLayout>
 
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipTuesday"
-                style="@style/Widget.Material3.Chip.Filter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="4dp"
-                android:text="T"
-                android:checkable="true" />
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipWednesday"
-                style="@style/Widget.Material3.Chip.Filter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="4dp"
-                android:text="W"
-                android:checkable="true" />
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipThursday"
-                style="@style/Widget.Material3.Chip.Filter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="4dp"
-                android:text="T"
-                android:checkable="true" />
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipFriday"
-                style="@style/Widget.Material3.Chip.Filter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="4dp"
-                android:text="F"
-                android:checkable="true" />
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipSaturday"
-                style="@style/Widget.Material3.Chip.Filter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="S"
-                android:checkable="true" />
-
-        </LinearLayout>
-
-        <LinearLayout
+        <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:orientation="horizontal"
-            android:gravity="center">
+            android:layout_marginTop="16dp"
+            android:hint="Label (optional)"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnWeekdays"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="0dp"
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/labelInput"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginEnd="8dp"
-                android:text="Weekdays" />
+                android:inputType="text" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnWeekends"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="0dp"
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="8dp"
+            android:text="Repeat"
+            android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/recurringSwitch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Recurring alarm"
+            android:layout_marginBottom="16dp" />
+
+        <LinearLayout
+            android:id="@+id/daysOfWeekContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Weekends" />
+                android:layout_marginBottom="12dp"
+                android:text="Repeat on"
+                android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
+
+            <com.google.android.material.chip.ChipGroup
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:singleLine="false">
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipSunday"
+                    style="@style/Widget.Material3.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="4dp"
+                    android:text="S"
+                    android:checkable="true" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipMonday"
+                    style="@style/Widget.Material3.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="4dp"
+                    android:text="M"
+                    android:checkable="true" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipTuesday"
+                    style="@style/Widget.Material3.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="4dp"
+                    android:text="T"
+                    android:checkable="true" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipWednesday"
+                    style="@style/Widget.Material3.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="4dp"
+                    android:text="W"
+                    android:checkable="true" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipThursday"
+                    style="@style/Widget.Material3.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="4dp"
+                    android:text="T"
+                    android:checkable="true" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipFriday"
+                    style="@style/Widget.Material3.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="4dp"
+                    android:text="F"
+                    android:checkable="true" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipSaturday"
+                    style="@style/Widget.Material3.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="S"
+                    android:checkable="true" />
+
+            </com.google.android.material.chip.ChipGroup>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="horizontal"
+                android:gravity="center">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnWeekdays"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="8dp"
+                    android:text="Weekdays" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnWeekends"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Weekends" />
+
+            </LinearLayout>
 
         </LinearLayout>
 
     </LinearLayout>
-
-</LinearLayout>
+</ScrollView>

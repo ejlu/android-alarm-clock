@@ -1,6 +1,15 @@
 package com.textalarm.app
 
+import android.Manifest
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.view.isVisible
+import com.textalarm.app.utils.AlarmScheduler
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -12,8 +21,6 @@ import com.textalarm.app.ui.AlarmAdapter
 import com.textalarm.app.ui.AlarmDetailsDialog
 import com.textalarm.app.ui.AlarmViewModel
 import com.textalarm.app.utils.TimeParser
-import java.util.*
-import java.util.regex.Pattern
 
 class MainActivity : AppCompatActivity() {
     
@@ -21,6 +28,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var alarmAdapter: AlarmAdapter
     private val viewModel: AlarmViewModel by viewModels()
     
+    private val notifications = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (!granted) Toast.makeText(this, R.string.notification_denied, Toast.LENGTH_LONG).show()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -31,12 +42,21 @@ class MainActivity : AppCompatActivity() {
         setupRecyclerView()
         setupClickListeners()
         observeAlarms()
+        binding.dismissAlarm.setOnClickListener { stopService(Intent(this, RingingService::class.java)) }
+        RingingService.isRinging.observe(this) { binding.dismissAlarm.isVisible = it }
+        val prefs = getPreferences(MODE_PRIVATE)
+        if (Build.VERSION.SDK_INT >= 33 && !prefs.getBoolean("asked_notifications", false) &&
+            checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            prefs.edit().putBoolean("asked_notifications", true).apply()
+            notifications.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
     }
     
     private fun setupRecyclerView() {
         alarmAdapter = AlarmAdapter(
             onAlarmToggle = { alarm, enabled ->
-                viewModel.toggleAlarm(alarm, enabled)
+                if (!enabled || canSetAlarm()) viewModel.toggleAlarm(alarm, enabled)
+                else alarmAdapter.notifyItemChanged(alarmAdapter.currentList.indexOf(alarm))
             },
             onAlarmEdit = { alarm ->
                 showAlarmDialog(alarm)
@@ -86,6 +106,7 @@ class MainActivity : AppCompatActivity() {
                     isEnabled = true
                 )
                 
+                if (!canSetAlarm()) return
                 viewModel.insertAlarm(alarm)
                 binding.timeInput.text?.clear()
                 binding.timeInput.error = null
@@ -105,6 +126,7 @@ class MainActivity : AppCompatActivity() {
     
     private fun showAlarmDialog(existingAlarm: Alarm? = null) {
         val dialog = AlarmDetailsDialog.newInstance(existingAlarm) { alarm ->
+            if (alarm.isEnabled && !canSetAlarm()) return@newInstance
             if (existingAlarm != null) {
                 viewModel.updateAlarm(alarm)
                 Toast.makeText(this, "Alarm updated", Toast.LENGTH_SHORT).show()
@@ -116,6 +138,15 @@ class MainActivity : AppCompatActivity() {
         dialog.show(supportFragmentManager, "AlarmDetailsDialog")
     }
     
+    private fun canSetAlarm(): Boolean {
+        if (AlarmScheduler(this).canSchedule()) return true
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            Toast.makeText(this, R.string.allow_exact_alarms, Toast.LENGTH_LONG).show()
+            startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:$packageName")))
+        }
+        return false
+    }
+
     private fun showDeleteConfirmation(alarm: Alarm) {
         MaterialAlertDialogBuilder(this)
             .setTitle("Delete Alarm")
